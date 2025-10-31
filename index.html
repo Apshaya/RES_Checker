@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Job Application Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-button { flex: 1; min-width: 200px; padding: 15px 25px; background: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tab-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .tab-button.active { background: #667eea; color: white; }
+        .tab-content { display: none; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .upload-area { border: 3px dashed #667eea; border-radius: 15px; padding: 40px; text-align: center; background: #f8f9ff; transition: all 0.3s; cursor: pointer; margin-bottom: 20px; }
+        .upload-area:hover { border-color: #5568d3; background: #f0f2ff; }
+        .upload-area.dragover { border-color: #4caf50; background: #e8f5e9; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-icon { font-size: 3rem; margin-bottom: 15px; }
+        .upload-text { font-size: 1.1rem; color: #667eea; font-weight: 600; margin-bottom: 10px; }
+        .upload-hint { color: #666; font-size: 0.9rem; }
+        .file-info { display: none; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .file-info.show { display: block; }
+        .file-info-content { display: flex; align-items: center; justify-content: space-between; }
+        .file-details { display: flex; align-items: center; gap: 10px; }
+        .file-icon { font-size: 2rem; }
+        .clear-file { background: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9rem; }
+        .clear-file:hover { background: #d32f2f; }
+        .divider { display: flex; align-items: center; margin: 25px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
+        .divider span { padding: 0 15px; color: #666; font-weight: 600; }
+        textarea { width: 100%; min-height: 200px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; resize: vertical; transition: border-color 0.3s; }
+        textarea:focus { outline: none; border-color: #667eea; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 12px 30px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover:not(:disabled) { background: #5568d3; transform: translateY(-2px); }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .results { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; display: none; }
+        .results.show { display: block; animation: slideIn 0.3s; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .score-badge { display: inline-block; padding: 10px 20px; border-radius: 25px; font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; }
+        .score-excellent { background: #4caf50; color: white; }
+        .score-good { background: #2196f3; color: white; }
+        .score-average { background: #ff9800; color: white; }
+        .score-poor { background: #f44336; color: white; }
+        .section { margin-bottom: 25px; }
+        .section h3 { color: #667eea; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px; }
+        .skill-tag { display: inline-block; padding: 6px 12px; background: #667eea; color: white; border-radius: 15px; margin: 5px; font-size: 0.9rem; }
+        .improvement-item { padding: 10px; background: white; border-left: 4px solid #667eea; margin-bottom: 10px; border-radius: 5px; }
+        .question-card { padding: 15px; background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .difficulty { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
+        .difficulty-easy { background: #4caf50; color: white; }
+        .difficulty-medium { background: #ff9800; color: white; }
+        .difficulty-hard { background: #f44336; color: white; }
+        .loading { display: none; text-align: center; padding: 20px; color: #667eea; }
+        .loading.show { display: block; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .header h1 { font-size: 1.8rem; } .tab-button { min-width: 100%; } .upload-area { padding: 30px 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Job Application Assistant</h1>
+            <p>Analyze resumes, job descriptions, and get personalized recommendations</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('resume', event)"> Resume Analyzer</button>
+            <button class="tab-button" onclick="switchTab('job', event)">Job Matcher</button>
+            <button class="tab-button" onclick="switchTab('skills', event)"> Skill Recommendations</button>
+            <button class="tab-button" onclick="switchTab('interview', event)"> Interview Prep</button>
+        </div>
+
+        <div id="resume-tab" class="tab-content active">
+            <h2>Resume Analyzer</h2>
+            <div class="upload-area" id="upload-area" onclick="document.getElementById('resume-file').click()">
+                <input type="file" id="resume-file" accept=".pdf,.docx,.doc,.txt" onchange="handleFileSelect(event)">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Click to upload or drag & drop your resume</div>
+                <div class="upload-hint">Supports PDF, DOCX, DOC, TXT (Max 5MB)</div>
+            </div>
+            <div class="file-info" id="file-info">
+                <div class="file-info-content">
+                    <div class="file-details">
+                        <span class="file-icon">📄</span>
+                        <div>
+                            <div style="font-weight: 600;" id="file-name"></div>
+                            <div style="font-size: 0.9rem; color: #666;" id="file-size"></div>
+                        </div>
+                    </div>
+                    <button class="clear-file" onclick="clearFile()">✕ Remove</button>
+                </div>
+            </div>
+            <div class="divider"><span>OR</span></div>
+            <div class="input-group">
+                <label>Paste your resume text here:</label>
+                <textarea id="resume-text" placeholder="Paste your resume here..."></textarea>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="analyzeResume()">Analyze Resume</button>
+                <button class="btn btn-secondary" onclick="loadSampleResume()">Load Sample</button>
+            </div>
+            <div class="loading" id="resume-loading"><div class="spinner"></div><p>Analyzing your resume...</p></div>
+            <div id="resume-results" class="results"></div>
+        </div>
+
+        <div id="job-tab" class="tab-content">
+            <h2>Job Description Matcher</h2>
+            <div class="input-group"><label>Your Resume:</label><textarea id="job-resume-text" placeholder="Paste your resume here..."></textarea></div>
+            <div class="input-group"><label>Job Description:</label><textarea id="job-description-text" placeholder="Paste job description here..."></textarea></div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="compareResumeWithJob()">Compare & Analyze</button>
+                <button class="btn btn-secondary" onclick="loadSampleJob()">Load Sample Job</button>
+            </div>
+            <div class="loading" id="job-loading"><div class="spinner"></div><p>Analyzing job match...</p></div>
+            <div id="job-results" class="results"></div>
+        </div>
+
+        <div id="skills-tab" class="tab-content">
+            <h2>Skill Recommendations</h2>
+            <div class="input-group"><label>List your current skills:</label><textarea id="current-skills" placeholder="E.g., JavaScript, React, Node.js, Python, MongoDB..."></textarea></div>
+            <div class="input-group"><label>Target Role (optional):</label><input type="text" id="target-role" placeholder="E.g., Full Stack Developer" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;"></div>
+            <button class="btn btn-primary" onclick="getSkillRecommendations()">Get Recommendations</button>
+            <div class="loading" id="skills-loading"><div class="spinner"></div><p>Generating recommendations...</p></div>
+            <div id="skills-results" class="results"></div>
+        </div>
+
+        <div id="interview-tab" class="tab-content">
+            <h2>Interview Preparation</h2>
+            <div class="input-group"><label>Your Skills:</label><textarea id="interview-skills" placeholder="List your technical skills..."></textarea></div>
+            <div class="input-group"><label>Target Role (optional):</label><input type="text" id="interview-role" placeholder="E.g., Frontend Developer" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;"></div>
+            <button class="btn btn-primary" onclick="getInterviewPrep()">Generate Interview Questions</button>
+            <div class="loading" id="interview-loading"><div class="spinner"></div><p>Preparing interview questions...</p></div>
+            <div id="interview-results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let selectedFile = null;
+
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                displayFileInfo(file);
+                document.getElementById('resume-text').value = '';
+            }
+        }
+
+        function displayFileInfo(file) {
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = (file.size / 1024).toFixed(2) + ' KB';
+            document.getElementById('file-info').classList.add('show');
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('resume-file').value = '';
+            document.getElementById('file-info').classList.remove('show');
+        }
+
+        const uploadArea = document.getElementById('upload-area');
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+                if (allowed.includes(file.type)) {
+                    selectedFile = file;
+                    displayFileInfo(file);
+                    document.getElementById('resume-text').value = '';
+                } else {
+                    alert('Please upload a PDF, DOCX, DOC, or TXT file');
+                }
+            }
+        });
+
+        async function analyzeResume() {
+            const resumeText = document.getElementById('resume-text').value.trim();
+            if (!selectedFile && !resumeText) { alert('Please either upload a resume file or paste resume text'); return; }
+            showLoading('resume');
+            try {
+                let response;
+                if (selectedFile) {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    response = await fetch(API_URL + '/resume/upload', { method: 'POST', body: formData });
+                } else {
+                    response = await fetch(API_URL + '/resume/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ resumeText: resumeText })
+                    });
+                }
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Analysis failed');
+                displayResumeResults(result.data, selectedFile ? selectedFile.name : null);
+            } catch (error) {
+                alert('Error: ' + error.message + '. Make sure the backend is running!');
+            } finally {
+                hideLoading('resume');
+            }
+        }
+
+        function displayResumeResults(data, fileName) {
+            const resultsDiv = document.getElementById('resume-results');
+            const scoreClass = data.overallScore >= 80 ? 'excellent' : data.overallScore >= 60 ? 'good' : data.overallScore >= 40 ? 'average' : 'poor';
+            let html = fileName ? '<div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;"><strong>📄 Analyzed File:</strong> ' + fileName + (data.fileSize ? '<span style="margin-left: 10px; color: #666;">(' + data.fileSize + ')</span>' : '') + '</div>' : '';
+            html += '<div class="score-badge score-' + scoreClass + '">Overall Score: ' + data.overallScore + '/100</div><div class="section"><h3>📋 Resume Sections</h3><p><strong>Found:</strong> ' + data.sections.found.join(', ') + '</p>';
+            html += data.sections.missing.length > 0 ? '<p style="color: #f44336;"><strong>Missing:</strong> ' + data.sections.missing.join(', ') + '</p>' : '<p style="color: #4caf50;">✓ All essential sections present</p>';
+            html += '</div><div class="section"><h3>💼 Skills Found</h3><div>' + data.skills.found.map(s => '<span class="skill-tag">' + s + '</span>').join('') + '</div>';
+            if (data.skills.suggested.length > 0) html += '<p style="margin-top: 15px;"><strong>Suggested Skills:</strong></p><div>' + data.skills.suggested.map(s => '<span class="skill-tag" style="background: #ff9800;">' + s + '</span>').join('') + '</div>';
+            html += '</div><div class="section"><h3>📈 Experience Level</h3><p>' + data.experience.level + ' (' + data.experience.years + ' years)</p></div><div class="section"><h3>💡 Improvements</h3>' + data.improvements.map(i => '<div class="improvement-item">' + i + '</div>').join('') + '</div><div class="section"><h3>🔑 Top Keywords</h3><div>' + data.keywords.slice(0, 10).map(k => '<span class="skill-tag" style="background: #2196f3;">' + k + '</span>').join('') + '</div></div>';
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+        }
+
+        async function loadSampleResume() {
+            try {
+                const response = await fetch(API_URL + '/resume/sample', { method: 'POST' });
+                const result = await response.json();
+                document.getElementById('resume-text').value = result.data.resumeText;
+                clearFile();
+            } catch (error) { console.error(error); }
+        }
+
+        async function compareResumeWithJob() {
+            const resumeText = document.getElementById('job-resume-text').value.trim();
+            const jobText = document.getElementById('job-description-text').value.trim();
+            if (!resumeText || !jobText) { alert('Please provide both resume and job description'); return; }
+            showLoading('job');
+            try {
+                const response = await fetch(API_URL + '/job-description/compare', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resumeText, jobText })
+                });
+                const result = await response.json();
+                displayJobResults(result.data);
+            } catch (error) {
+                alert('Error. Make sure the backend is running!');
+            } finally {
+                hideLoading('job');
+            }
+        }
+
+        function displayJobResults(data) {
+            const resultsDiv = document.getElementById('job-results');
+            const scoreClass = data.matchScore >= 80 ? 'excellent' : data.matchScore >= 60 ? 'good' : data.matchScore >= 40 ? 'average' : 'poor';
+            let html = '<div class="score-badge score-' + scoreClass + '">Match Score: ' + data.matchScore + '%</div><div class="section"><h3>📌 Job Role</h3><p><strong>' + data.role + '</strong></p><p>Level: ' + data.experienceLevel.level + ' (' + data.experienceLevel.minimum + '+ years)</p></div><div class="section"><h3>✅ Required Skills</h3><div>' + data.requiredSkills.map(s => '<span class="skill-tag">' + s + '</span>').join('') + '</div></div>';
+            if (data.preferredSkills.length > 0) html += '<div class="section"><h3>⭐ Preferred Skills</h3><div>' + data.preferredSkills.map(s => '<span class="skill-tag" style="background: #ff9800;">' + s + '</span>').join('') + '</div></div>';
+            if (data.recommendations && data.recommendations.length > 0) html += '<div class="section"><h3>💡 Recommendations</h3>' + data.recommendations.map(r => '<div class="improvement-item">' + r + '</div>').join('') + '</div>';
+            html += '<div class="section"><h3>🎯 Key Responsibilities</h3><ul>' + data.responsibilities.map(r => '<li>' + r + '</li>').join('') + '</ul></div>';
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+        }
+
+        async function loadSampleJob() {
+            try {
+                const response = await fetch(API_URL + '/job-description/sample', { method: 'POST' });
+                const result = await response.json();
+                document.getElementById('job-description-text').value = result.data.jobText;
+            } catch (error) { console.error(error); }
+        }
+
+        async function getSkillRecommendations() {
+            const skillsText = document.getElementById('current-skills').value.trim();
+            const targetRole = document.getElementById('target-role').value.trim();
+            if (!skillsText) { alert('Please list your current skills'); return; }
+            showLoading('skills');
+            try {
+                const response = await fetch(API_URL + '/skills/recommendations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skillsText, targetRole })
+                });
+                const result = await response.json();
+                displaySkillsResults(result.data);
+            } catch (error) {
+                alert('Error. Make sure the backend is running!');
+            } finally {
+                hideLoading('skills');
+            }
+        }
+
+        function displaySkillsResults(data) {
+            const resultsDiv = document.getElementById('skills-results');
+            let html = '<div class="section"><h3>Your Current Skills</h3><div>' + data.currentSkills.map(s => '<span class="skill-tag">' + s + '</span>').join('') + '</div></div><div class="section"><h3>🚀 Recommended Skills to Learn</h3>' + data.recommendedSkills.map(r => '<div class="improvement-item"><strong>' + r.skill + '</strong> <span class="difficulty difficulty-' + r.priority + '">' + r.priority + '</span><p style="margin-top: 5px; color: #666;">' + r.reason + '</p></div>').join('') + '</div><div class="section"><h3>📚 Learning Resources</h3>' + data.learningResources.slice(0, 5).map(lr => '<div style="margin-bottom: 15px;"><strong>' + lr.skill + ':</strong><ul>' + lr.resources.map(r => '<li>' + r + '</li>').join('') + '</ul></div>').join('') + '</div><div class="section"><h3>🎯 Career Paths</h3>' + data.careerPaths.map(p => '<div class="improvement-item">' + p + '</div>').join('') + '</div>';
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+        }
+
+        async function getInterviewPrep() {
+            const skillsText = document.getElementById('interview-skills').value.trim();
+            const targetRole = document.getElementById('interview-role').value.trim();
+            if (!skillsText) { alert('Please list your skills'); return; }
+            showLoading('interview');
+            try {
+                const response = await fetch(API_URL + '/skills/interview-prep', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skillsText, targetRole })
+                });
+                const result = await response.json();
+                displayInterviewResults(result.data);
+            } catch (error) {
+                alert('Error. Make sure the backend is running!');
+            } finally {
+                hideLoading('interview');
+            }
+        }
+
+        function displayInterviewResults(data) {
+            const resultsDiv = document.getElementById('interview-results');
+            let html = '<div class="section"><h3>Focus Areas</h3>' + data.focusAreas.map(a => '<div class="improvement-item">' + a + '</div>').join('') + '</div><div class="section"><h3>❓ Practice Questions</h3>' + data.questions.map(q => '<div class="question-card"><strong>' + q.question + '</strong><span class="difficulty difficulty-' + q.difficulty + '">' + q.difficulty + '</span><p style="margin-top: 8px; color: #666; font-size: 0.9rem;">Category: ' + q.category + ' | Skills: ' + q.skills.join(', ') + '</p></div>').join('') + '</div><div class="section"><h3>💡 Preparation Tips</h3>' + data.prepTips.map(t => '<div class="improvement-item">' + t + '</div>').join('') + '</div>';
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.add('show');
+        }
+
+        function showLoading(section) {
+            document.getElementById(section + '-loading').classList.add('show');
+            document.getElementById(section + '-results').classList.remove('show');
+        }
+
+        function hideLoading(section) {
+            document.getElementById(section + '-loading').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
